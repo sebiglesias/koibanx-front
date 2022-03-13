@@ -1,0 +1,16 @@
+.container {
+  margin-top: 20px;
+  padding: 40px;
+}
+
+.fluidContainer {
+  display: flex;
+  justify-content: center;
+  button {
+    margin-left: 10px
+  }
+}
+
+.searchBox {
+  flex-grow: 1;
+}
