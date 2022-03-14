@@ -1,5 +1,5 @@
 import Container from '@mui/material/Container';
-import React, {useCallback, useMemo} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef} from 'react';
 import './App.css';
 import {SearchBox} from "./searchBox/searchBox";
 import {Table, TableHeaders} from "./table/table";
@@ -8,23 +8,39 @@ import 'react-toastify/dist/ReactToastify.css';
 import {AppState} from "./store";
 import {useDispatch, useSelector} from "react-redux";
 import {useApi} from "./api/useApi";
-import {setBooleanFieldMap, setMax, setSearchText, setSkip, setTextFieldMap} from "./query/querySlice";
-import {BooleanMapFilterType, TextMapFilterType} from "./common/arrayHandler";
+import {setBooleanFieldMap, setMax, setOrder, setSearchText, setSkip, setTextFieldMap} from "./query/querySlice";
+import {BooleanMapFilterType, OrderMapFilterType, TextMapFilterType} from "./common/arrayHandler";
 import {setData} from "./table/tableSlice";
 
 export const App = () => {
     const {data} = useSelector((state: AppState) => state.data)
-    const {query} = useSelector((state: AppState) => state.query)
+    const {query, searchText} = useSelector((state: AppState) => state.query)
     const api = useApi()
     const dispatch = useDispatch()
-
-    const booleanFieldsChange = useCallback((map: BooleanMapFilterType) => {
-        dispatch(setBooleanFieldMap(map))
-    }, [dispatch])
 
     const search = useCallback(() => {
         api.fetchData(query).then(data => dispatch(setData(data))).catch(() => {})
     }, [api, dispatch, query])
+
+    const usePrevious = <T extends unknown>(value: T): T | undefined => {
+        const ref = useRef<T>();
+        useEffect(() => {
+            ref.current = value;
+        });
+        return ref.current;
+    };
+    const prevAmount = usePrevious({query, searchText});
+
+    useEffect(() => {
+        // Want to auto-search for every acion that changes the query EXCEPT when typing text
+        if(prevAmount?.searchText === searchText && prevAmount?.query !== query) {
+            search()
+        }
+    }, [query, search, prevAmount, searchText])
+
+    const booleanFieldsChange = useCallback((map: BooleanMapFilterType) => {
+        dispatch(setBooleanFieldMap(map))
+    }, [dispatch])
 
     const searchTextChange = useCallback((text: string) => {
         dispatch(setSearchText(text))
@@ -36,14 +52,12 @@ export const App = () => {
 
     const pageChange = useCallback((page) => {
         data !== undefined && dispatch(setSkip(data.rowsPerPage * page))
-        search()
-    }, [data, search, dispatch])
+    }, [data, dispatch])
 
     const pageSizeChange = useCallback((size) => {
-        // not entirely sure how the spec fits with the rowsPerPage attribute
+        // assuming max plays a role in the rowsPerPage
         data !== undefined && dispatch(setMax(size))
-        search()
-    }, [data, search, dispatch])
+    }, [data, dispatch])
 
     const tableData = useMemo(() => {
         return data !== undefined && data.data !== undefined ? data.data : []
@@ -52,6 +66,10 @@ export const App = () => {
     const tablePagination = useMemo(() => {
         return data !== undefined ? {page: data.page, pages: data.pages, pageSize: data.rowsPerPage} : {page: 0, pages: 0, pageSize: 0}
     }, [data])
+
+    const onOrderChange = useCallback((map: OrderMapFilterType) => {
+        dispatch(setOrder(map))
+    }, [dispatch])
 
     const tableHeaders: TableHeaders[] = [
         {
@@ -62,12 +80,14 @@ export const App = () => {
         {
             label: 'Comercio',
             objectAttribute: 'Comercio',
-            type: 'text'
+            type: 'text',
+            canBeOrdered: true
         },
         {
             label: 'CUIT',
             objectAttribute: 'CUIT',
-            type: 'text'
+            type: 'text',
+            canBeOrdered: true
         },
         {
             label: 'Concepto1',
@@ -127,7 +147,14 @@ export const App = () => {
                   searchTextChange={searchTextChange}
                   textFieldsChange={textFieldsChange}
               />
-              <Table info={tableData} headers={tableHeaders} paginationInfo={tablePagination} pageChange={pageChange} pageSizeChange={pageSizeChange}/>
+              <Table
+                  info={tableData}
+                  headers={tableHeaders}
+                  paginationInfo={tablePagination}
+                  pageChange={pageChange}
+                  pageSizeChange={pageSizeChange}
+                  onOrderChange={onOrderChange}
+              />
               <ToastContainer/>
           </Container>
       );

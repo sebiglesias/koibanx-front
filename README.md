@@ -1,46 +1,28 @@
-# Getting Started with Create React App
+# Koibanx Front Challenge
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Used [create-react-app](https://create-react-app.dev/) with [Typescript](https://www.typescriptlang.org/), [Redux](https://redux.js.org/) and [Material UI](https://mui.com/) for some components (Not the table).
 
-## Available Scripts
+## Run
 
-In the project directory, you can run:
+Using node version `v16.13.2` run the following commands
 
-### `npm start`
-
-Runs the app in the development mode.\
+```bash
+# installs dependencies
+npm i 
+# starts the application in development mode
+npm start
+```
 Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+## Assumptions and Caveats 
 
-### `npm test`
-
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
-
-### `npm run build`
-
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
-
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
+- *Generic Table*: I tried making the table quite "generic". Even if the object of the data changes, the developer can
+easily add a string to an array in the App.tsx file. Same occurs with filters and "orderable" columns. I laid ground for
+ including different types of filters for different data types in the searchbox as well.
+- *Table search approach*: I thought of making the AWS table approach, where some filters affect the local data shown in
+ the table without making a new request. At the end I went with sending a request with anything that affects the query 
+parameter, EXCEPT when typing on the search box, as I found it a bit annoying to type 1 character and send a request.
+- *Not taking security precautions*: I just copied and pasted the input from several filters, but the input in the 
+searchbox can be used to send "sql-injection-ish" requests, I decided those checkups go beyond the scope of this challenge, 
+ but it could be implemented somewhere around the method that generates the queryParameter or even at the component level, 
+restricting available input.

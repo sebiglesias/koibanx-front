@@ -1,12 +1,15 @@
 import {Pagination} from "./pagination/pagination";
-import {useCallback, useMemo} from "react";
+import {useCallback, useMemo, useState} from "react";
 import classes from './table.module.scss'
 import moment from "moment";
+import {HeaderOrder} from "./headerOrder/headerOrder";
+import {OrderMapFilterType, stringArrayToOrderFilterMap,} from "../common/arrayHandler";
 
 export type TableHeaders = {
     label: string,
     objectAttribute: string,
-    type: 'text' | 'date' | 'boolean'
+    type: 'text' | 'date' | 'boolean',
+    canBeOrdered?: boolean
 }
 
 export type TableProps = {
@@ -15,12 +18,21 @@ export type TableProps = {
     headers: TableHeaders[]
     pageChange: (page: number) => void
     pageSizeChange: (page: number) => void
+    onOrderChange: (map: OrderMapFilterType) => void
 }
 
-export const Table = ({info, headers, paginationInfo, pageChange, pageSizeChange}: TableProps) => {
+export const Table = ({info, headers, paginationInfo, pageChange, pageSizeChange, onOrderChange}: TableProps) => {
+    const [orderHeaders, setOrderHeaders] = useState<OrderMapFilterType>
+        (stringArrayToOrderFilterMap(headers.filter(h => h.canBeOrdered).map(h => h.objectAttribute)))
 
     const onPageChange = useCallback((page: number) => pageChange(page), [pageChange])
     const onPageResize = useCallback((size: number) => pageSizeChange(size), [pageSizeChange])
+
+    const orderChange = useCallback((header: string, order: 'asc' | 'desc' | 'none') => {
+        const map = new Map(orderHeaders).set(header, {id: header, value: order})
+        setOrderHeaders(map)
+        onOrderChange(map)
+    }, [onOrderChange, orderHeaders])
 
     const pagination = useMemo(() =>
         <Pagination
@@ -34,7 +46,6 @@ export const Table = ({info, headers, paginationInfo, pageChange, pageSizeChange
         return info !== undefined && info.map((row, index) => {
             return <tr className={classes.row} key={index}>
                 {headers.map((h, index) => {
-
                     // @ts-ignore
                     const rowElement = row[h.objectAttribute];
                     let result = rowElement
@@ -57,7 +68,11 @@ export const Table = ({info, headers, paginationInfo, pageChange, pageSizeChange
                     <thead>
                     <tr className={classes.row}>
                         {headers.map((h, index) => {
-                            return <th key={index} className={classes.header}>{h.label}</th>
+                            return <th key={index} className={classes.header}>{h.label}{h.canBeOrdered
+                                && <HeaderOrder header={h.objectAttribute}
+                                                onChange={orderChange}
+                                                key={index}/>}
+                            </th>
                         })}
                     </tr>
                     </thead>
@@ -67,7 +82,7 @@ export const Table = ({info, headers, paginationInfo, pageChange, pageSizeChange
                 </table>
                 {pagination}</div>
         )
-    }, [pagination, rows, headers])
+    }, [pagination, rows, headers, orderChange])
 
     return (
         <>

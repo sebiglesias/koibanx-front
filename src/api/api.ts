@@ -23,7 +23,7 @@ export type Data = {
 }
 
 export class Api {
-    private baseUrl =  'https://api.koibanx.com/stores'
+    private baseUrl =  'https://api.koibanx.com/stores?'
     fetchData(query: string): Promise<Data> {
         toast(this.baseUrl + query)
         console.log(this.baseUrl + query)

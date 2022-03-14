@@ -1,6 +1,6 @@
 import {
     generateBooleanQuery,
-    generateMaxQuery,
+    generateMaxQuery, generateOrderQuery,
     generateQuery,
     generateSearchTextQuery,
     generateSkipQuery
@@ -16,7 +16,10 @@ describe('Url Generator test', () => {
         let boolMap = new Map()
         boolMap = boolMap.set('boolTest', {id: 'boolTest', value: 'all'})
 
-        expect(generateQuery('a', textMap, boolMap, defaultSkip, defaultMax )).toBe('q={  }&max=50&skip=0')
+        let orderMap = new Map()
+        orderMap = orderMap.set('order', {id: 'order', value: 'none'})
+
+        expect(generateQuery('a', textMap, boolMap, defaultSkip, defaultMax, orderMap )).toBe('q={}&max=50&skip=0')
     });
 
     it('should return only text query', function () {
@@ -26,7 +29,9 @@ describe('Url Generator test', () => {
         let boolMap = new Map()
         boolMap = boolMap.set('boolTest', {id: 'boolTest', value: 'all'})
 
-        expect(generateQuery('a', textMap, boolMap, defaultSkip, defaultMax)).toBe(`q={ $or: [  {"test" : {"$regex" : "^.*?a.*?$"}} ] }&max=50&skip=0`)
+        let orderMap = new Map()
+        orderMap = orderMap.set('order', {id: 'order', value: 'none'})
+        expect(generateQuery('a', textMap, boolMap, defaultSkip, defaultMax, orderMap)).toBe(`q={$or:[{"test":{"$regex":"^.*?a.*?$"}}]}&max=50&skip=0`)
     });
 
     it('should return only boolean query', function () {
@@ -36,17 +41,37 @@ describe('Url Generator test', () => {
         let boolMap = new Map()
         boolMap = boolMap.set('boolTest', {id: 'boolTest', value: 'true'})
 
-        expect(generateQuery('a', textMap, boolMap, defaultSkip, defaultMax)).toBe(`q={  "boolTest": "1" }&max=50&skip=0`)
+
+        let orderMap = new Map()
+        orderMap = orderMap.set('order', {id: 'order', value: 'none'})
+
+        expect(generateQuery('a', textMap, boolMap, defaultSkip, defaultMax, orderMap)).toBe(`q={"boolTest":"1"}&max=50&skip=0`)
     });
 
-    it('should return text and boolean query', function () {
+    it('should return only order query', function () {
+        let textMap = new Map()
+        textMap = textMap.set('test', {id: 'test', checked: false})
+
+        let boolMap = new Map()
+        boolMap = boolMap.set('boolTest', {id: 'boolTest', value: 'all'})
+
+        let orderMap = new Map()
+        orderMap = orderMap.set('order', {id: 'order', value: 'asc'})
+
+        expect(generateQuery('a', textMap, boolMap, defaultSkip, defaultMax, orderMap)).toBe(`q={}&max=50&skip=0&h={"$orderby":{"order":1}}`)
+    });
+
+    it('should return text, boolean and order query', function () {
         let textMap = new Map()
         textMap = textMap.set('test', {id: 'test', checked: true})
 
         let boolMap = new Map()
         boolMap = boolMap.set('boolTest', {id: 'boolTest', value: 'true'})
 
-        expect(generateQuery('a', textMap, boolMap, defaultSkip, defaultMax)).toBe(`q={ $or: [  {"test" : {"$regex" : "^.*?a.*?$"}} ], "boolTest": "1" }&max=50&skip=0`)
+        let orderMap = new Map()
+        orderMap = orderMap.set('order', {id: 'order', value: 'asc'})
+
+        expect(generateQuery('a', textMap, boolMap, defaultSkip, defaultMax, orderMap)).toBe(`q={$or:[{"test":{"$regex":"^.*?a.*?$"}}],"boolTest":"1"}&max=50&skip=0&h={"$orderby":{"order":1}}`)
     });
 
     describe('Text query', () => {
@@ -97,6 +122,38 @@ describe('Url Generator test', () => {
             boolMap = boolMap.set('bool', {id: 'bool', value: 'false'})
 
             expect(generateBooleanQuery(boolMap)).toBe(` "bool": "0"`)
+        });
+    })
+
+    describe('Order Query', () => {
+        it('should return empty order query', function () {
+            let orderMap = new Map()
+            orderMap.set('order', {id: 'order', value: 'none'})
+
+            expect(generateOrderQuery(orderMap)).toBe('')
+        });
+
+        it('should return asc order query', function () {
+            let orderMap = new Map()
+            orderMap.set('order', {id: 'order', value: 'asc'})
+
+            expect(generateOrderQuery(orderMap)).toBe('&h={ "$orderby": {"order": 1 } }')
+        });
+
+        it('should return desc order query', function () {
+            let orderMap = new Map()
+            orderMap.set('order', {id: 'order', value: 'desc'})
+
+            expect(generateOrderQuery(orderMap)).toBe('&h={ "$orderby": {"order": -1 } }')
+        });
+
+        it('should return asc and desc order query', function () {
+            let orderMap = new Map()
+            orderMap.set('order1', {id: 'order1', value: 'asc'})
+            orderMap.set('order2', {id: 'order2', value: 'desc'})
+            orderMap.set('order3', {id: 'order3', value: 'none'})
+
+            expect(generateOrderQuery(orderMap)).toBe('&h={ "$orderby": {"order1": 1,"order2": -1 } }')
         });
     })
 

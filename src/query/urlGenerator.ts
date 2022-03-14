@@ -1,13 +1,14 @@
-import {BooleanMapFilterType, TextMapFilterType} from "../common/arrayHandler";
+import {BooleanMapFilterType, OrderMapFilterType, TextMapFilterType} from "../common/arrayHandler";
 
-export const generateQuery = (searchText: string, textFieldMap: TextMapFilterType, booleanFieldMap: BooleanMapFilterType, skip: number, max: number): string => {
+export const generateQuery = (searchText: string, textFieldMap: TextMapFilterType, booleanFieldMap: BooleanMapFilterType, skip: number, max: number, orderFieldMap: OrderMapFilterType): string => {
 
     const textResult = generateSearchTextQuery(searchText, textFieldMap)
     const booleanResult = generateBooleanQuery(booleanFieldMap)
+    const orderResult = generateOrderQuery(orderFieldMap)
     const skipResult = generateSkipQuery(skip)
     const maxResult = generateMaxQuery(max)
     const result = textResult.length > 0 && booleanResult.length > 0 ? `${textResult},${booleanResult}` : textResult + booleanResult
-    return `q={ ${result} }${maxResult}${skipResult}`
+    return `q={${result}}${maxResult}${skipResult}${orderResult}`.replace(/ /g, '')
 }
 
 export const generateSearchTextQuery = (searchText: string, textFieldMap: TextMapFilterType): string => {
@@ -39,9 +40,10 @@ export const generateBooleanQuery = (booleanFieldMap: BooleanMapFilterType): str
     const booleanValues = booleanFieldMap.values();
     let booleanElem = booleanValues.next();
     while (booleanElem !== undefined && booleanElem.value !== undefined) {
-        if (booleanElem.value.value === 'true') {
+        const value = booleanElem.value.value;
+        if (value === 'true') {
             booleanResult = booleanResult + ` "${booleanElem.value.id}": "1",`
-        } else if (booleanElem.value.value === 'false') {
+        } else if (value === 'false') {
             booleanResult = booleanResult + ` "${booleanElem.value.id}": "0",`
         }
         booleanElem = booleanValues.next();
@@ -49,6 +51,25 @@ export const generateBooleanQuery = (booleanFieldMap: BooleanMapFilterType): str
     // slice removes last comma character
     booleanResult = booleanResult.slice(0, -1)
     return booleanResult
+}
+
+export const generateOrderQuery = (orderFieldMap: OrderMapFilterType): string => {
+    const values = orderFieldMap.values()
+    let orderElem = values.next()
+    let orderResult = `"$orderby": {`
+    let innerText = ''
+    while (orderElem !== undefined && orderElem.value !== undefined) {
+        const value = orderElem.value.value;
+        if (value === 'asc') {
+            innerText = innerText + `"${orderElem.value.id}": 1,`
+        } else if (value === 'desc') {
+            innerText = innerText + `"${orderElem.value.id}": -1,`
+        }
+        orderElem = values.next()
+    }
+    innerText = innerText.slice(0, -1)
+    orderResult = innerText.length > 0 ? orderResult + innerText + ' }' : ''
+    return orderResult.length > 0 ? `&h={ ${orderResult} }` : ''
 }
 
 export const generateSkipQuery = (skip: number): string => {
