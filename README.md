@@ -33,3 +33,4 @@ restricting available input.
 - **Table CSS**: I used some CSS from and icons from the [MUI](https://mui.com/) library, but did not use any of their components
  for the table.
 - **Column ordering**: I did the column order in a bit of a rush, I misread the assignment and skipped that. I only realized when I gave the challenge a final check-up, and its CSS is not my best work but the video shows its functionality. Just in case it is not understandable, columns start as unordered, click once and they are ordered ASC, click once more and they are ordered DESC, (now the arrow is red) click a final time and the ordering should be canceled.
+- **Output**: I'm showing a notification whenever a request should be sent, and also showing the result in the console.
